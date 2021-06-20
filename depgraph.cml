@@ -1,0 +1,105 @@
+@include('file.cml')
+@include('set.cml')
+@include('util.cml')
+
+(* -------------------------------------------------------------------------
+ * Dependencies are stored in a graph represented as a hashmap from string
+ * keys to 'entry' pairs.
+ * ------------------------------------------------------------------------- *)
+
+structure DepGraph = struct
+
+  type entry = string *        (* file contents (code)    *)
+               string Set.set; (* children (dependencies) *)
+
+  local
+    type graph = (string, entry) Hashtable.hashtable;
+
+    (* The dependency-graph is populated by a call to [build].
+     *)
+    val the_dep_graph: graph =
+      Hashtable.empty 10 str_hash String.compare;
+
+    (* [build] builds the dependency graph [the_dep_graph].
+     *)
+    fun build visited worklist =
+      case worklist of
+        [] => ()
+      | fname::rest =>
+          if Set.mem fname visited then
+            build visited rest
+          else
+            let
+              val (depfiles, code) = read_includes fname
+              val visited = Set.insert fname visited
+              val deps = Set.fromList depfiles
+              val _ = Hashtable.insert the_dep_graph fname (code, deps)
+            in
+              build visited (depfiles @ rest)
+            end;
+
+    (* [cyclic] checks the dependency graph for cycles using a simple depth-first
+     * search.
+     *)
+    fun cyclic visited fname =
+      if Set.mem fname visited then True else
+        case Hashtable.lookup the_dep_graph fname of
+          None => False
+        | Some (_, deps) => Set.exists (cyclic (Set.insert fname visited)) deps;
+
+    datatype mark = Temp | Perm;
+
+    (* The mark set keeps track of marks for nodes during the topological order
+     * computation [toporder].
+     *)
+    val the_mark_set: (string, mark) Hashtable.hashtable =
+      Hashtable.empty 10 str_hash String.compare;
+
+    (* Some topological ordering algorithm off Wikipedia. Apparently the original
+     * source is a textbook: Cormen et al., (2001), "Section 22.4: Topological
+     * sort", Introduction to Algorithms (2nd ed.), MIT Press and McGraw-Hill,
+     * pp. 549–552, ISBN 0-262-03293-7.
+     *
+     * Invariant: unmarked nodes are stored in worklist because they're easier to
+     * access that way. When they get marked, their mark is stored in
+     * [the_mark_set].
+     *)
+    fun toporder order worklist =
+      case worklist of
+        [] => List.rev order
+      | node::rest => toporder (visit order node) rest
+    and visit order node =
+      case Hashtable.lookup the_mark_set node of
+        Some Perm => order
+      | Some Temp => failwith "visit: graph is not acyclic!"
+      | None =>
+          let
+            val _ = Hashtable.insert the_mark_set node Temp
+            val (_, deps) = Option.valOf (Hashtable.lookup the_dep_graph node)
+                            handle Bind =>
+                              failwith ("node " ^ node ^ " is missing from the " ^
+                                        "dependency graph")
+            val deplist = Set.toList deps
+            val order' = List.foldl visit order deplist
+            val _ = Hashtable.insert the_mark_set node Perm
+          in
+            node::order
+          end;
+  in
+    val toporder = fn start => toporder [] [start];
+
+    fun reset () =
+      (Hashtable.clear the_dep_graph;
+       Hashtable.clear the_mark_set);
+
+    val build = fn start => build Set.empty [start];
+
+    val cyclic = cyclic Set.empty;
+
+    fun dump () = Hashtable.toAscList the_dep_graph;
+  end (* local *)
+end (* struct *)
+
+(*
+vim: ft=sml
+*)

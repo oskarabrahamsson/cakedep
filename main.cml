@@ -1,0 +1,79 @@
+@include('depgraph.cml')
+@include('util.cml')
+
+(* =========================================================================
+ * cakedep: resolve cakeml include pragmas
+ *
+ * Oskar Abrahamsson, 2021                                    www.cakeml.org
+ * ========================================================================= *)
+
+(* -------------------------------------------------------------------------
+ * The function [compute_deps] takes a filename, transitively computes the
+ * dependencies of this file, and generates a topological order together with
+ * a concatenated string that represent the contents (code) of those files,
+ * presented in the topological order.
+ * ------------------------------------------------------------------------- *)
+
+fun compute_deps fname =
+  let
+    val _ = DepGraph.build fname
+    val _ = DepGraph.cyclic fname orelse
+            failwith "Dependency graph contains a cycle"
+    val order = DepGraph.toporder fname
+    val depgraph = DepGraph.dump ()
+    val _ = print "=== TOPOLOGICAL ORDERING: ===\n";
+    val _ = List.mapi (fn i => fn s =>
+                         (print (Int.toString i);
+                          print ". "; print s; print "\n"))
+                      order
+    val _ = print "\n"
+    val code =
+      String.concat (List.map (fst o Option.valOf o Alist.lookup depgraph)
+                               order)
+  in
+    (code, order)
+  end;
+
+(* -------------------------------------------------------------------------
+ * Entrypoint.
+ * ------------------------------------------------------------------------- *)
+
+val usage =
+  String.concat [
+    "cakedep: thing for resolving dependencies in CakeML projects\n",
+    "Usage: ", CommandLine.name (), " [options] <filename>\n",
+    "\n",
+    "OPTIONS:\n",
+    "\n",
+    "    -h, --help         Show this message\n",
+    "\n"
+  ];
+
+val _ =
+  case CommandLine.arguments () of
+    "-h"::_ => print usage
+  | "--help"::_ => print usage
+  | [file] =>
+       (let
+          val (code, order) = compute_deps file
+          val ostream = TextIO.openOut "output.cml"
+          val _ = TextIO.output ostream code
+          val _ = TextIO.closeOut ostream
+        in
+          print "Wrote to \"output.cml\". Bye!\n"
+        end
+        handle Fail err =>
+          (print (CommandLine.name ());
+           print " failed with this error:\n   ";
+           print err;
+           print "\n"))
+  | opts =>
+      (print "Unknown options: ";
+       List.app (fn s => print (s ^ " ")) opts;
+       print "...\n\n";
+       print usage);
+
+
+(*
+vim: ft=sml
+*)

@@ -1,0 +1,39 @@
+(* =========================================================================
+ * cakedep: resolve cakeml include pragmas
+ *
+ * Oskar Abrahamsson, 2021                                    www.cakeml.org
+ * ========================================================================= *)
+
+(* -------------------------------------------------------------------------
+ * Sets-as-lists.
+ * ------------------------------------------------------------------------- *)
+
+structure Set = struct
+  local
+    datatype 'a set = Set ('a list);
+    fun mem_ x = List.exists (fn y => x = y);
+    fun insert_ x xs = if mem_ x xs then xs else x::xs;
+    fun del x xs =
+      case xs of
+        [] => xs
+      | y::ys => if x = y then ys else y::del x ys;
+    fun delete_ x xs = if mem_ x xs then del x xs else xs;
+    fun nub_ xs =
+      case xs of
+        [] => xs
+      | y::ys => if mem_ y ys then nub_ ys else y::nub_ ys;
+  in
+    type 'a set = 'a set;
+    fun mem x s = case s of Set xs => mem_ x xs;
+    fun insert x s = Set (case s of Set xs => insert_ x xs);
+    fun delete x s = Set (case s of Set xs => delete_ x xs);
+    val empty = Set [];
+    fun fromList xs = Set (nub_ xs);
+    fun toList (Set xs) = xs;
+    fun exists p (Set xs) = List.exists p xs;
+  end (* local *)
+end (* struct *)
+
+(*
+vim: ft=sml
+*)

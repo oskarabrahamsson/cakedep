@@ -1,0 +1,131 @@
+@include('util.cml')
+
+(* =========================================================================
+ * cakedep: resolve cakeml include pragmas
+ *
+ * Oskar Abrahamsson, 2021                                    www.cakeml.org
+ * ========================================================================= *)
+
+(* -------------------------------------------------------------------------
+ * A valid pragma should match this regex (I think):
+ *   ^@include\('[^']*'\)\w*$
+ *
+ * - It should start at the beginning of the line
+ * - It continues until the end of the line (any amount of trailing spaces
+ *   until EOL is ok)
+ * - Any non-tick symbol can go between the ticks, but it should only be
+ *   something that can be interpreted as a filename
+ * ------------------------------------------------------------------------- *)
+
+fun dest_include str =
+  case String.fields (fn x => x = #"'") str of
+    [pre, file, post] =>
+      if pre = "@include(" andalso
+         String.sub post 0 = #")" andalso
+         List.all Char.isSpace (List.drop (String.explode post) 1)
+      then Some file
+      else None
+  | _ => None;
+
+val is_include = Option.isSome o dest_include;
+
+(* -------------------------------------------------------------------------
+ * Read all lines from a file, and collect all includes.
+ * - All pragmas are expected to go at the very top, before anything else.
+ *   Once we see something which is not a pragma, we stop reading the file.
+ * We return the file path(s) found in the pragma(s), together with the rest
+ * of the input file (i.e. post-pragma).
+ *   ^@include\('[^']*'\)\w*$
+ *
+ * In other words, this is OK:
+ *
+ *   01  @include('foo/bar.cml')
+ *   02  @include('baz.cml')
+ *   03 <other stuff here>
+ *
+ * And this is not OK:
+ *
+ *   01
+ *   02  @include('foo/bar.cml')
+ *   03  @include('baz.cml')
+ *   04  <other stuff>
+ * ------------------------------------------------------------------------- *)
+
+val dest_includes =
+  let
+    fun dest_includes' files l =
+      case l of
+        [] => (files, String.concat l)
+      | h::t =>
+          case dest_include h of
+            None => (files, String.concat l)
+          | Some f => dest_includes' (f::files) t;
+  in
+    dest_includes' []
+  end;
+
+fun read_includes fname =
+  case TextIO.b_inputLinesFrom fname of
+    None => failwith ("No such file: " ^ fname)
+  | Some lines => dest_includes lines;
+
+(*
+val _ =
+  case CommandLine.arguments () of
+    ["--help"] =>
+      (print "usage: ";
+       print (CommandLine.name ());
+       print " [(--help|filename)]";
+       print "\n\n";
+       print "OPTIONS:\n";
+       print "  --help      show this text\n";
+       print "\n";
+       print "  If no options nor files are provided then some tests are run.";
+       print "\n\n")
+  | [file] =>
+      let
+        val (files, rest) = read_includes file
+      in
+        print "=== Includes: ===\n\n";
+        List.mapi (fn i => fn s => print (" " ^ Int.toString i ^ ". " ^
+                                          s ^ "\n")) files;
+        print "\n";
+        print "=== The rest (code): ===\n\n";
+        print ("(* BEGIN: " ^ file ^ " *)\n");
+        print rest;
+        print ("\n(* END: " ^ file ^ " *)\n")
+      end
+      handle Fail err =>
+        (print (CommandLine.name ());
+         print " failed: ";
+         print err;
+         print "\n")
+  | _ =>
+    let
+      val test1 = "@include('../foo/bar.cml')           "
+      val test2 = "@include('../foo/bar.cml')           \n"
+      val test3 = "@include('../foo/bar.cml')"
+      val test4 = " @include('../foo/bar.cml')"
+      val test5 = " @include(../foo/bar.cml')"
+      val test6 = " @include('..''/foo/bar.cml')"
+      val test7 = "@include('../foo/bar.cml')          k "
+      fun do_test test =
+        (print "  is_include \"";
+         print test;
+         print "\": ";
+         print (if is_include test then "yes\n" else "no\n"))
+    in
+      print "=== Some tests: ===\n";
+      do_test test1;
+      do_test test2;
+      do_test test3;
+      do_test test4;
+      do_test test5;
+      do_test test6;
+      do_test test7
+    end;
+    *)
+
+(*
+vim: ft=sml
+*)
