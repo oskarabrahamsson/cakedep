@@ -41,41 +41,70 @@ fun compute_deps fname =
 val usage =
   String.concat [
     "cakedep: thing for resolving dependencies in CakeML projects\n",
-    "Usage: ", CommandLine.name (), " [options] <filename>\n",
+    "Usage: ", CommandLine.name (), " [options] [--] <filename>\n",
     "\n",
     "OPTIONS:\n",
     "\n",
     "    -h, --help         Show this message\n",
+    "    -v, --verbose      Enable printing of debug messages\n",
+    "    -o <filename>      Write output to <filename> (default=output.cml)\n",
     "\n"
   ];
 
 val print_err = TextIO.output TextIO.stdErr
 
+structure Config = struct
+  val filename = Ref "";
+  val outfile = Ref "output.cml";
+end (* struct *)
+
+fun parse_flags flags =
+  case flags of
+    [] => ()
+  | "--verbose"::rest =>
+      (Debug.debug := True;
+       parse_flags rest)
+  | "-v"::rest =>
+      (Debug.debug := True;
+       parse_flags rest)
+  | "--help"::_ => print_err usage
+  | "-h"::_ => print_err usage
+  | "-o"::fname::rest =>
+      (Config.outfile := fname;
+       parse_flags rest)
+  | "--"::fname::_ => Config.filename := fname
+  | flag::rest =>
+      if String.sub flag 0 = #"-" then
+        (print_err ("Unknown option: " ^ flag ^ "...\n");
+         print_err ("Write: " ^ (CommandLine.name ()) ^ " --help");
+         print_err " to see usage information.\n";
+         Runtime.exit 1)
+      else
+        (Config.filename := flag;
+         parse_flags rest);
+
 val _ =
-  case CommandLine.arguments () of
-    "-h"::_ => print usage
-  | "--help"::_ => print usage
-  | [file] =>
-       (let
-          val (code, order) = compute_deps file
-          val ostream = TextIO.openOut "output.cml"
-          val _ = TextIO.output ostream code
-          val _ = TextIO.closeOut ostream
-        in
-          print "Wrote to \"output.cml\". Bye!\n"
-        end
-        handle Fail err =>
-          (print_err (CommandLine.name ());
-           print_err " failed with this error:\n   ";
-           print_err err;
-           print_err "\n";
-           Runtime.exit 1))
-  | opts =>
-      (print_err "Unknown options: ";
-       List.app (fn s => print_err (s ^ " ")) opts;
-       print_err "...\n\n";
-       print_err usage;
-       Runtime.exit 1);
+  let
+    val _ = parse_flags (CommandLine.arguments ())
+    val _ = String.size (!Config.filename) <> 0 orelse
+            failwith ("No input filename given, " ^
+                      "write: " ^ (CommandLine.name ()) ^
+                      " --help for help.")
+    val (code, order) = compute_deps (!Config.filename)
+    val ostream = TextIO.openOut (!Config.outfile)
+    val _ = TextIO.output ostream code
+    val _ = TextIO.closeOut ostream
+  in
+    print "Wrote output to \"";
+    print (!Config.outfile);
+    print "\". Bye!\n"
+  end
+  handle Fail err =>
+    (print_err (CommandLine.name ());
+     print_err " failed with this error:\n   ";
+     print_err err;
+     print_err "\n";
+     Runtime.exit 1);
 
 (*
 vim: ft=sml

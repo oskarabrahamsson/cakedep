@@ -13,7 +13,7 @@ endif
 bootstrap: cakedep
 
 cakedep: cakedep0
-	$(shell $< main.cml)
+	./$< --verbose -o output.cml main.cml
 	$(CAKEML) --target=$(TARGET) < output.cml > main.s
 	$(CC) $(BASIS) main.s -o $@
 	@-$(RM) main.s output.cml
@@ -26,4 +26,4 @@ cakedep0: $(wildcard *.cml)
 	@-$(RM) main.s
 
 clean:
-	@- rm -rfv cakedep
+	@- rm -rfv cakedep cakedep0
