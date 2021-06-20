@@ -2,7 +2,7 @@ ifndef $(CAKE)
     CAKEML=cake
 endif
 ifndef $(BASIS)
-    BASIS=$(HOME)/dev/cakeml-git/basis/basis_ffi.c
+    BASIS=$(CAKEMLDIR)/basis/basis_ffi.c
 endif
 ifndef $(TARGET)
     TARGET=arm8
