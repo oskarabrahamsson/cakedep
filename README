@@ -1,0 +1,68 @@
+===============================================================================
+cakedep: tool for resolving CakeML includes
+by: Oskar Abrahamsson, 2021
+
+CakeML is available at www.cakeml.org
+===============================================================================
+
+0. REQUIREMENTS
+===========================
+
+* cakedep requires the binary version of the CakeML compiler. See
+  https://www.cakeml.org/.
+* cakedep requires a C compiler, because the CakeML compiler does.
+
+1. BOOTSTRAP
+===========================
+
+cakedep bootstraps itself when you build it. Run `make` from the command line.
+If successful, this creates two files: cakedep0 and cakedep. The former is the
+result of concatenating all source code with cat, and compiling using the CakeML
+compiler. The latter is a bootstrapped copy of cakedep produced by calling
+cakedep0 on its own source code.
+
+The following options can be customized via Makefile variables when building
+cakedep:
+
+  CAKE        The (full) path to the CakeML compiler binary
+  TARGET      A target string. Write `cake --help` at the command line for
+              more information, where 'cake' is the path to your CakeML compiler
+              binary.
+  BASIS       Path to the CakeML basis_ffi.c.
+
+2. USAGE INSTRUCTIONS
+===========================
+
+* Add dependencies to CakeML files by writing include pragmas at the top of
+  files:
+
+    (* foo.cml *)
+
+    @include('path/to/bar.cml')
+    @include('and/baz.cml')
+
+    ...
+
+* cakedep accepts include pragmas if they appear at the start of a line, if the
+  strings "@include('" and "')" (without double quotes) are written with no
+  spaces, and if the rest of the line contains only spaces. Pragmas may be
+  written anywhere in a file, but are not necessarily expanded where they are
+  written, nor in the order they were written. (Thus it makes sense to write
+  your includes near the top of the file, for visibility.)
+
+* Call cakedep on the 'main' file of your project:
+
+    cakedep foo.cml
+
+  cakedep attempts to compute the dependency graph of your project, assert that
+  it is free of cycles, and then compute a topological order of the dependency
+  graph. It then concatenates all the code in this order (with @include pragmas
+  removed) and writes the code to an output file.
+
+* Write `cakedep --help` at the command line to see a list of options.
+
+3. KNOWN ISSUES
+===========================
+
+Probably! This is not verified software.
+
