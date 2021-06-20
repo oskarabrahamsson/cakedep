@@ -38,15 +38,15 @@ val is_include = Option.isSome o dest_include;
 
 val dest_includes =
   let
-    fun dest_includes' files l =
+    fun dest_includes' files code l =
       case l of
-        [] => (files, String.concat l)
+        [] => (files, String.concat (List.rev code))
       | h::t =>
           case dest_include h of
-            None => dest_includes' files t
-          | Some f => dest_includes' (f::files) t;
+            None => dest_includes' files (h::code) t
+          | Some f => dest_includes' (f::files) code t;
   in
-    dest_includes' []
+    dest_includes' [] []
   end;
 
 fun read_includes fname =
