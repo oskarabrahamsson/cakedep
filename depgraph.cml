@@ -24,19 +24,33 @@ structure DepGraph = struct
      *)
     fun build visited worklist =
       case worklist of
-        [] => ()
+        [] => Debug.log_msg "build" "Empty worklist; stopping."
       | fname::rest =>
-          if Set.mem fname visited then
-            build visited rest
-          else
-            let
-              val (depfiles, code) = read_includes fname
-              val visited = Set.insert fname visited
-              val deps = Set.fromList depfiles
-              val _ = Hashtable.insert the_dep_graph fname (code, deps)
-            in
-              build visited (depfiles @ rest)
-            end;
+          (Debug.log_msg "build" ("Considering adding " ^ fname ^
+                                  " to dependency graph ...");
+           if Set.mem fname visited then
+             (Debug.log_msg "build" (fname ^ " was previously visited.");
+              build visited rest)
+           else
+             let
+               val _ = Debug.log_msg "build" (fname ^ " has not been visited.")
+               val (depfiles, code) = read_includes fname
+               val _ = Debug.log_msg "build" ("Done reading includes for " ^
+                                              fname ^ ".")
+               val visited = Set.insert fname visited
+               val deps = Set.fromList depfiles
+               val _ = if Set.isEmpty deps then
+                         Debug.log_msg "build" (fname ^ " has no dependencies.")
+                       else
+                         Debug.log_msg "build" (
+                         "Inserting the following dependencies for " ^ fname ^
+                         ": [ " ^ String.concat (List.map (fn dep => dep ^ " ")
+                                                         (Set.toList deps)) ^
+                         "]")
+               val _ = Hashtable.insert the_dep_graph fname (code, deps)
+             in
+               build visited (depfiles @ rest)
+             end);
 
     (* [cyclic] checks the dependency graph for cycles using a simple depth-first
      * search.
