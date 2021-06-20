@@ -11,7 +11,7 @@ endif
 OUTPUT=output.cml
 ASMOUT=main.s
 
-.PHONY: bootstrap clean
+.PHONY: bootstrap clean tests
 
 bootstrap: cakedep
 
@@ -27,6 +27,9 @@ cakedep0: $(wildcard *.cml)
 	    $(CAKEML) --target=$(TARGET) > $(ASMOUT)
 	$(CC) $(BASIS) $(ASMOUT) -o $@
 	@-rm $(ASMOUT)
+
+tests:
+	$(MAKE) -C tests
 
 clean:
 	@-rm -rfv cakedep cakedep0 $(OUTPUT) $(ASMOUT)

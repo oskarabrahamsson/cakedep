@@ -1,0 +1,4 @@
+@include('a.cml')
+
+val _ = print "I'm depending on myself\n";
+
