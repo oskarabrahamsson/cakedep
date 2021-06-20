@@ -11,7 +11,7 @@ endif
 OUTPUT=output.cml
 ASMOUT=main.s
 
-.PHONY: bootstrap
+.PHONY: bootstrap clean
 
 bootstrap: cakedep
 
