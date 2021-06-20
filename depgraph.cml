@@ -1,11 +1,11 @@
-@include('file.cml')
-@include('set.cml')
-@include('util.cml')
-
 (* -------------------------------------------------------------------------
  * Dependencies are stored in a graph represented as a hashmap from string
  * keys to 'entry' pairs.
  * ------------------------------------------------------------------------- *)
+
+@include('file.cml')
+@include('set.cml')
+@include('util.cml')
 
 structure DepGraph = struct
 

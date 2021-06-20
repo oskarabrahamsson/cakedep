@@ -1,10 +1,10 @@
-@include('util.cml')
-
 (* =========================================================================
  * cakedep: resolve cakeml include pragmas
  *
  * Oskar Abrahamsson, 2021                                    www.cakeml.org
  * ========================================================================= *)
+
+@include('util.cml')
 
 (* -------------------------------------------------------------------------
  * A valid pragma should match this regex (I think):
@@ -31,24 +31,9 @@ val is_include = Option.isSome o dest_include;
 
 (* -------------------------------------------------------------------------
  * Read all lines from a file, and collect all includes.
- * - All pragmas are expected to go at the very top, before anything else.
- *   Once we see something which is not a pragma, we stop reading the file.
  * We return the file path(s) found in the pragma(s), together with the rest
  * of the input file (i.e. post-pragma).
  *   ^@include\('[^']*'\)\w*$
- *
- * In other words, this is OK:
- *
- *   01  @include('foo/bar.cml')
- *   02  @include('baz.cml')
- *   03 <other stuff here>
- *
- * And this is not OK:
- *
- *   01
- *   02  @include('foo/bar.cml')
- *   03  @include('baz.cml')
- *   04  <other stuff>
  * ------------------------------------------------------------------------- *)
 
 val dest_includes =
@@ -58,7 +43,7 @@ val dest_includes =
         [] => (files, String.concat l)
       | h::t =>
           case dest_include h of
-            None => (files, String.concat l)
+            None => dest_includes' files t
           | Some f => dest_includes' (f::files) t;
   in
     dest_includes' []

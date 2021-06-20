@@ -1,11 +1,11 @@
-@include('depgraph.cml')
-@include('util.cml')
-
 (* =========================================================================
  * cakedep: resolve cakeml include pragmas
  *
  * Oskar Abrahamsson, 2021                                    www.cakeml.org
  * ========================================================================= *)
+
+@include('depgraph.cml')
+@include('util.cml')
 
 (* -------------------------------------------------------------------------
  * The function [compute_deps] takes a filename, transitively computes the
