@@ -28,6 +28,7 @@ structure Set = struct
     fun insert x s = Set (case s of Set xs => insert_ x xs);
     fun delete x s = Set (case s of Set xs => delete_ x xs);
     val empty = Set [];
+    fun isEmpty (Set xs) = List.null xs;
     fun fromList xs = Set (nub_ xs);
     fun toList (Set xs) = xs;
     fun exists p (Set xs) = List.exists p xs;
