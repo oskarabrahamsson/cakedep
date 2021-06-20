@@ -1,6 +1,12 @@
-CAKEML=cake
-BASIS=$(HOME)/dev/cakeml-git/basis/basis_ffi.c
-TARGET=arm8
+ifndef $(CAKE)
+    CAKEML=cake
+endif
+ifndef $(BASIS)
+    BASIS=$(HOME)/dev/cakeml-git/basis/basis_ffi.c
+endif
+ifndef $(TARGET)
+    TARGET=arm8
+endif
 
 .PHONY: bootstrap
 
