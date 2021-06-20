@@ -11,6 +11,7 @@ CakeML is available at www.cakeml.org
 * cakedep requires the binary version of the CakeML compiler. See
   https://www.cakeml.org/.
 * cakedep requires a C compiler, because the CakeML compiler does.
+* The unit tests require Poly/ML, see https://polyml.org.
 
 1. BOOTSTRAP
 ===========================
