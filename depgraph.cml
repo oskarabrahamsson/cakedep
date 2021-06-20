@@ -26,33 +26,36 @@ structure DepGraph = struct
       case worklist of
         [] => Debug.log_msg "build" "Empty worklist; stopping."
       | fname::rest =>
-          (Debug.log_msg "build" ("Considering adding " ^ fname ^
-                                  " to dependency graph ...");
+          (Debug.log_msg "build" ("Considering adding \"" ^ fname ^
+                                  "\" to dependency graph ...");
            if Set.mem fname visited then
-             (Debug.log_msg "build" (fname ^ " was previously visited.");
+             (Debug.log_msg "build" ("\"" ^ fname ^ " was previously visited." ^
+                                     " Skipping it.");
               build visited rest)
            else
              let
-               val _ = Debug.log_msg "build" (fname ^ " has not been visited.")
+               val _ = Debug.log_msg "build" ("\"" ^ fname ^ "\" has not been" ^
+                                              " visited. Adding it.")
                val (depfiles, code) = read_includes fname
-               val _ = Debug.log_msg "build" ("Done reading includes for " ^
-                                              fname ^ ".")
+               val _ = Debug.log_msg "build" ("Done reading includes for \"" ^
+                                              fname ^ "\".")
                val visited = Set.insert fname visited
                val deps = Set.fromList depfiles
                val _ = if Set.isEmpty deps then
-                         Debug.log_msg "build" (fname ^ " has no dependencies.")
+                         Debug.log_msg "build" ("\"" ^ fname ^
+                                                "\" has no dependencies.")
                        else
                          Debug.log_msg "build" (
-                         "Inserting the following dependencies for " ^ fname ^
-                         ": " ^ String.concat (List.map (fn dep => dep ^ " ")
+                         "Adding the following dependencies for \"" ^ fname ^
+                         "\": " ^ String.concat (List.map (fn dep => dep ^ " ")
                                                          (Set.toList deps)))
                val _ = Hashtable.insert the_dep_graph fname (code, deps)
              in
                build visited (depfiles @ rest)
              end);
 
-    (* [cyclic] checks the dependency graph for cycles using a simple depth-first
-     * search.
+    (* [cyclic] checks the dependency graph for cycles using a simple depth-
+     * first search.
      *)
     fun cyclic visited fname =
       if Set.mem fname visited then True else
@@ -68,13 +71,13 @@ structure DepGraph = struct
     val the_mark_set: (string, mark) Hashtable.hashtable =
       Hashtable.empty 10 str_hash String.compare;
 
-    (* Some topological ordering algorithm off Wikipedia. Apparently the original
-     * source is a textbook: Cormen et al., (2001), "Section 22.4: Topological
-     * sort", Introduction to Algorithms (2nd ed.), MIT Press and McGraw-Hill,
-     * pp. 549–552, ISBN 0-262-03293-7.
+    (* Some topological ordering algorithm off Wikipedia. Apparently the
+     * original source is a textbook: Cormen et al., (2001), "Section 22.4:
+     * Topological sort", Introduction to Algorithms (2nd ed.), MIT Press and
+     * McGraw-Hill, pp. 549–552, ISBN 0-262-03293-7.
      *
-     * Invariant: unmarked nodes are stored in worklist because they're easier to
-     * access that way. When they get marked, their mark is stored in
+     * Invariant: unmarked nodes are stored in worklist because they're easier
+     * to access that way. When they get marked, their mark is stored in
      * [the_mark_set].
      *
      * Note: we return the reversed order because the dependencies must appear
@@ -92,7 +95,7 @@ structure DepGraph = struct
       case Hashtable.lookup the_mark_set node of
         Some Perm =>
           (Debug.log_msg "visit" ("Node \"" ^ node ^ "\" has permanent mark," ^
-                                  "returning from recursive call...");
+                                  " returning from recursive call ...");
            order)
       | Some Temp => failwith "visit: graph is not acyclic!"
       | None =>
@@ -102,8 +105,8 @@ structure DepGraph = struct
             val _ = Hashtable.insert the_mark_set node Temp
             val (_, deps) = Option.valOf (Hashtable.lookup the_dep_graph node)
                             handle Bind =>
-                              failwith ("node " ^ node ^ " is missing from the " ^
-                                        "dependency graph")
+                              failwith ("node \"" ^ node ^ "\" is missing " ^
+                                        "from the dependency graph")
             val deplist = Set.toList deps
             val order' = List.foldl visit order deplist
             val _ = Debug.log_msg "visit"

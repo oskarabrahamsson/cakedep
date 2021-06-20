@@ -24,7 +24,7 @@ structure Debug = struct
 
   fun log_msg func msg =
     if !debug then
-      TextIO.output TextIO.stdErr ("[" ^ func ^ "]: " ^ msg ^ "\n")
+      TextIO.output TextIO.stdErr ("[" ^ func ^ "] " ^ msg ^ "\n")
     else ();
 
 end (* struct *)

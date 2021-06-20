@@ -50,7 +50,7 @@ val dest_includes =
   end;
 
 fun read_includes fname =
-  (Debug.log_msg "read_includes" ("Reading from " ^ fname);
+  (Debug.log_msg "read_includes" ("Reading from \"" ^ fname ^ "\" ...");
    case TextIO.b_inputLinesFrom fname of
      None => failwith ("No such file: " ^ fname)
    | Some lines => dest_includes lines);
