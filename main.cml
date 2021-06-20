@@ -49,6 +49,8 @@ val usage =
     "\n"
   ];
 
+val print_err = TextIO.output TextIO.stdErr
+
 val _ =
   case CommandLine.arguments () of
     "-h"::_ => print usage
@@ -63,16 +65,17 @@ val _ =
           print "Wrote to \"output.cml\". Bye!\n"
         end
         handle Fail err =>
-          (print (CommandLine.name ());
-           print " failed with this error:\n   ";
-           print err;
-           print "\n"))
+          (print_err (CommandLine.name ());
+           print_err " failed with this error:\n   ";
+           print_err err;
+           print_err "\n";
+           Runtime.exit 1))
   | opts =>
-      (print "Unknown options: ";
-       List.app (fn s => print (s ^ " ")) opts;
-       print "...\n\n";
-       print usage);
-
+      (print_err "Unknown options: ";
+       List.app (fn s => print_err (s ^ " ")) opts;
+       print_err "...\n\n";
+       print_err usage;
+       Runtime.exit 1);
 
 (*
 vim: ft=sml
