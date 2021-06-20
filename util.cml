@@ -19,6 +19,16 @@ fun str_hash str =
     hash 0 0
   end;
 
+structure Debug = struct
+  val debug = Ref False;
+
+  fun log_msg func msg =
+    if !debug then
+      TextIO.output TextIO.stdErr ("[" ^ func ^ "]: " ^ msg ^ "\n")
+    else ();
+
+end (* struct *)
+
 (*
 vim: ft=sml
 *)
