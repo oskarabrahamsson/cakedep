@@ -29,4 +29,4 @@ cakedep0: $(wildcard *.cml)
 	@-rm $(ASMOUT)
 
 clean:
-	@-rm -rfv cakedep cakedep0 $(OUTPUT)
+	@-rm -rfv cakedep cakedep0 $(OUTPUT) $(ASMOUT)
