@@ -56,7 +56,7 @@ val usage =
     "    -v, --verbose      Enable printing of debug messages\n",
     "    -o <filename>      Write output to <filename> (default=output.cml)\n",
     "    -n, --no-output    Write no output; instead, write the filenames in\n",
-    "                       topological order to stdout.\n",
+    "                       topological order to stdout\n",
     "\n"
   ];
 
@@ -75,8 +75,12 @@ fun parse_flags flags =
   | "-v"::rest =>
       (Debug.debug := True;
        parse_flags rest)
-  | "--help"::_ => print_err usage
-  | "-h"::_ => print_err usage
+  | "--help"::_ =>
+      (print_err usage;
+       Runtime.exit 0)
+  | "-h"::_ =>
+      (print_err usage;
+       Runtime.exit 0)
   | "-o"::fname::rest =>
       (Config.outfile := fname;
        parse_flags rest)
