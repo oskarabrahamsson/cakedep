@@ -67,5 +67,6 @@ cakedep:
 
 * cakedep does not know where it is called from, and it can not handle paths
   correctly (because the CakeML basis library lacks this functionality). Thus,
-  you need to call cakedep from the directory for which paths are relative to.
+  you need to call cakedep from the directory which your include paths are
+  relative to.
 
