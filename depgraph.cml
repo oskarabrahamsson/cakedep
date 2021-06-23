@@ -54,15 +54,6 @@ structure DepGraph = struct
                build visited (depfiles @ rest)
              end);
 
-    (* [cyclic] checks the dependency graph for cycles using a simple depth-
-     * first search.
-     *)
-    fun cyclic visited fname =
-      if Set.mem fname visited then True else
-        case Hashtable.lookup the_dep_graph fname of
-          None => False
-        | Some (_, deps) => Set.exists (cyclic (Set.insert fname visited)) deps;
-
     datatype mark = Temp | Perm;
 
     (* The mark set keeps track of marks for nodes during the topological order
@@ -97,7 +88,7 @@ structure DepGraph = struct
           (Debug.log_msg "visit" ("Node \"" ^ node ^ "\" has permanent mark," ^
                                   " returning from recursive call ...");
            order)
-      | Some Temp => failwith "visit: graph is not acyclic!"
+      | Some Temp => failwith "Dependency graph contains a cycle."
       | None =>
           let
             val _ = Debug.log_msg "visit"
@@ -129,8 +120,6 @@ structure DepGraph = struct
        Hashtable.clear the_mark_set);
 
     val build = fn start => build Set.empty [start];
-
-    val cyclic = cyclic Set.empty;
 
     fun dump () = Hashtable.toAscList the_dep_graph;
   end (* local *)

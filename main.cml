@@ -19,8 +19,6 @@ val print_err = TextIO.output TextIO.stdErr
 fun compute_deps fname =
   let
     val _ = DepGraph.build fname
-    val _ = not (DepGraph.cyclic fname) orelse
-            failwith "Dependency graph contains a cycle"
     val order = DepGraph.toporder fname
     val depgraph = DepGraph.dump ()
     val _ = if !Debug.debug then
