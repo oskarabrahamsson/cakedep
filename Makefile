@@ -8,6 +8,7 @@ ifndef $(TARGET)
     TARGET=arm8
 endif
 
+BASIS_EXTRA=basis_extra.c
 OUTPUT=output.cml
 ASMOUT=main.s
 
@@ -18,14 +19,14 @@ bootstrap: cakedep
 cakedep: cakedep0
 	./$< --verbose -o $(OUTPUT) main.cml
 	$(CAKEML) --target=$(TARGET) < $(OUTPUT) > $(ASMOUT)
-	$(CC) $(BASIS) $(ASMOUT) -o $@
+	$(CC) $(BASIS) $(BASIS_EXTRA) $(ASMOUT) -o $@
 	@-rm $(ASMOUT) $(OUTPUT)
 
 cakedep0: $(wildcard *.cml)
 	cat util.cml file.cml set.cml depgraph.cml main.cml | \
 	    sed 's/^@include.*//' | \
 	    $(CAKEML) --target=$(TARGET) > $(ASMOUT)
-	$(CC) $(BASIS) $(ASMOUT) -o $@
+	$(CC) $(BASIS) $(BASIS_EXTRA) $(ASMOUT) -o $@
 	@-rm $(ASMOUT)
 
 tests:

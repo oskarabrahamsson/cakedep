@@ -29,6 +29,33 @@ structure Debug = struct
 
 end (* struct *)
 
+structure Path = struct
+  (* The CakeML does not support any functions for dealing with paths and
+   * directories. This code calls into code defined in basis_extra.c,
+   * which in turn calls C functions getcwd() and realpath().
+   *)
+  local
+    (* The first 2 bytes store the length of the string, and the following
+     * 16382 bytes store the actual string *)
+    val buf = Word8Array.array 16384 (Word8.fromInt 0)
+    val _ = #(getcwd) "" buf
+    val strlen = Marshalling.w22n buf 0
+    val cwd = Word8Array.substring buf 2 strlen
+  in
+    fun getcwd () = cwd;
+    fun absolute path =
+      let
+        val relpath = cwd ^ "/" ^ path
+        val buf = Word8Array.array 16384 (Word8.fromInt 0)
+        val _ = #(realpath) relpath buf
+        val strlen = Marshalling.w22n buf 0
+      in
+        Word8Array.substring buf 2 strlen
+      end
+  end; (* local *)
+
+end (* struct *)
+
 (*
 vim: ft=sml
 *)
