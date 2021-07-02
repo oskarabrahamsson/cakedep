@@ -26,9 +26,16 @@ structure DepGraph = struct
       case worklist of
         [] => Debug.log_msg "build" "Empty worklist; stopping."
       | fname::rest =>
-          (Debug.log_msg "build" ("Considering adding \"" ^ fname ^
-                                  "\" to dependency graph ...");
-           if Set.mem fname visited then
+          let
+            (* The absolute path is used when reading the file, and when
+             * refering to it in the 'visited' graph.
+             *)
+            val abspath = Path.absolute fname
+            val _ = Debug.log_msg "build"
+                      ("Considering adding \"" ^ fname ^
+                       "\" to dependency graph ...")
+          in
+           if Set.mem abspath visited then
              (Debug.log_msg "build" ("\"" ^ fname ^ " was previously visited." ^
                                      " Skipping it.");
               build visited rest)
@@ -36,10 +43,10 @@ structure DepGraph = struct
              let
                val _ = Debug.log_msg "build" ("\"" ^ fname ^ "\" has not been" ^
                                               " visited. Adding it.")
-               val (depfiles, code) = read_includes fname
+               val (depfiles, code) = read_includes abspath
                val _ = Debug.log_msg "build" ("Done reading includes for \"" ^
                                               fname ^ "\".")
-               val visited = Set.insert fname visited
+               val visited = Set.insert abspath visited
                val deps = Set.fromList depfiles
                val _ = if Set.isEmpty deps then
                          Debug.log_msg "build" ("\"" ^ fname ^
@@ -52,7 +59,8 @@ structure DepGraph = struct
                val _ = Hashtable.insert the_dep_graph fname (code, deps)
              in
                build visited (depfiles @ rest)
-             end);
+             end
+          end;
 
     datatype mark = Temp | Perm;
 
