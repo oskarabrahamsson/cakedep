@@ -64,7 +64,7 @@ cakedep:
 3. KNOWN ISSUES
 ===========================
 
-* Although there is some initial support for relative paths, cakedep does not
-  keep track of the working directory of files, and thus computes the wrong
-  paths when considering files not in the working directory of cakedep.
+* The custom Path module in cakedep seems to keep track of actual filepaths (so
+  far), but the C-code calls exit() when something is wrong with the path.
+* The Path code probably won't work on Windows.
 
