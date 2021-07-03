@@ -21,21 +21,19 @@ structure DepGraph = struct
       Hashtable.empty 10 str_hash String.compare;
 
     (* [build] builds the dependency graph [the_dep_graph].
+     * Invariant: worklist is passed a _full_ (absolute) path to the file.
      *)
     fun build visited worklist =
       case worklist of
         [] => Debug.log_msg "build" "Empty worklist; stopping."
       | fname::rest =>
           let
-            (* The absolute path is used when reading the file, and when
-             * refering to it in the 'visited' graph.
-             *)
-            val abspath = Path.absolute fname
+            val (dir, file) = Path.split fname
             val _ = Debug.log_msg "build"
                       ("Considering adding \"" ^ fname ^
                        "\" to dependency graph ...")
           in
-           if Set.mem abspath visited then
+           if Set.mem fname visited then
              (Debug.log_msg "build" ("\"" ^ fname ^ " was previously visited." ^
                                      " Skipping it.");
               build visited rest)
@@ -43,10 +41,14 @@ structure DepGraph = struct
              let
                val _ = Debug.log_msg "build" ("\"" ^ fname ^ "\" has not been" ^
                                               " visited. Adding it.")
-               val (depfiles, code) = read_includes abspath
+               val (depfiles, code) = read_includes fname
                val _ = Debug.log_msg "build" ("Done reading includes for \"" ^
                                               fname ^ "\".")
-               val visited = Set.insert abspath visited
+               val visited = Set.insert fname visited
+               (* depfiles have paths relative to this file, so they need to be
+                * joined with the path of this file. *)
+               val depfiles = List.map (Path.absolute o Path.join dir)
+                                        depfiles
                val deps = Set.fromList depfiles
                val _ = if Set.isEmpty deps then
                          Debug.log_msg "build" ("\"" ^ fname ^
@@ -117,8 +119,9 @@ structure DepGraph = struct
   in
     val toporder = fn start =>
       let
+        val abspath = Path.absolute (Path.join (Path.getcwd ()) start)
         val nodes = List.map fst (Hashtable.toAscList the_dep_graph)
-        val worklist = start::List.filter (fn x => x <> start) nodes
+        val worklist = abspath::List.filter (fn x => x <> abspath) nodes
       in
         toporder [] worklist
       end;
@@ -127,7 +130,12 @@ structure DepGraph = struct
       (Hashtable.clear the_dep_graph;
        Hashtable.clear the_mark_set);
 
-    val build = fn start => build Set.empty [start];
+    val build = fn start =>
+      let
+        val abspath = Path.absolute (Path.join (Path.getcwd ()) start)
+      in
+        build Set.empty [abspath]
+      end;
 
     fun dump () = Hashtable.toAscList the_dep_graph;
   end (* local *)
